@@ -1,0 +1,53 @@
+rules_version = '2';
+
+/**
+ * NSE Weekly Gainers - Security Ruleset
+ *
+ * Core Philosophy:
+ * This ruleset implements a Public Read-Only data model. The application serves as a 
+ * dashboard for financial data (NSE Weekly Gainers) which is intended to be visible 
+ * to all users, regardless of authentication status. 
+ *
+ * Data Structure:
+ * The data is organized into a single top-level collection: /weekly_stock_gainers.
+ * This structure avoids hierarchical complexity and ensures high performance for 
+ * listing and filtering stock data.
+ *
+ * Key Security Decisions:
+ * 1. Public Read Access: Both 'get' and 'list' operations are permitted for all 
+ *    users (including unauthenticated and anonymous users) because the stock 
+ *    data is public market information.
+ * 2. Strict Write Restriction: All write operations (create, update, delete) 
+ *    are explicitly denied for all client-side requests. This application 
+ *    assumes a "Backend-as-the-Source-of-Truth" model where data is populated 
+ *    and updated exclusively by a secure server-side process or service account, 
+ *    bypassing these client-side rules.
+ * 3. Prototyping Flexibility: While reads are open, the rules remain rigid 
+ *    against unauthorized modifications to ensure data integrity during the 
+ *    prototyping phase.
+ */
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // --- Collection Rules ---
+
+    /**
+     * @description Publicly accessible collection of weekly stock gainers.
+     * @path /weekly_stock_gainers/{stockGainerId}
+     * @allow (get) Any user (authenticated or unauthenticated).
+     * @allow (list) Any user (authenticated or unauthenticated).
+     * @deny (create, update, delete) All users. Writes are restricted to backend processes.
+     * @principle Public Read-Only Access Pattern.
+     */
+    match /weekly_stock_gainers/{stockGainerId} {
+      // Data is public market information intended for general consumption.
+      allow get, list: if true;
+
+      // Clients are never permitted to modify stock data. 
+      // This is managed by a secure backend process.
+      allow create, update, delete: if false;
+    }
+
+  }
+}

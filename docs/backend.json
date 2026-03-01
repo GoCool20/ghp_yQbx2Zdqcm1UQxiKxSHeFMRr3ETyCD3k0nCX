@@ -1,0 +1,82 @@
+{
+  "entities": {
+    "WeeklyStockGainer": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "WeeklyStockGainer",
+      "type": "object",
+      "description": "Represents a stock that has gained more than 2% compared to its closing price on the same weekday in the previous week, intended for display on the NSE Weekly Gainers dashboard.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the WeeklyStockGainer entity."
+        },
+        "symbol": {
+          "type": "string",
+          "description": "The unique ticker symbol of the stock, e.g., 'TCS'."
+        },
+        "companyName": {
+          "type": "string",
+          "description": "The full registered name of the company associated with the stock symbol."
+        },
+        "currentClosePrice": {
+          "type": "number",
+          "description": "The closing price of the stock on the current comparison date."
+        },
+        "previousWeekClosePrice": {
+          "type": "number",
+          "description": "The closing price of the stock on the same weekday in the previous week."
+        },
+        "percentageChange": {
+          "type": "number",
+          "description": "The percentage change in price, calculated as (Current Close - Previous Week Close) / Previous Week Close * 100. This value is expected to be greater than 2."
+        },
+        "volume": {
+          "type": "number",
+          "description": "The total trading volume of the stock on the current comparison date."
+        },
+        "comparisonDate": {
+          "type": "string",
+          "description": "The date of the current closing price and comparison, formatted as YYYY-MM-DD.",
+          "format": "date"
+        }
+      },
+      "required": [
+        "id",
+        "symbol",
+        "companyName",
+        "currentClosePrice",
+        "previousWeekClosePrice",
+        "percentageChange",
+        "volume",
+        "comparisonDate"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/weekly_stock_gainers/{stockGainerId}",
+        "definition": {
+          "entityName": "WeeklyStockGainer",
+          "schema": {
+            "$ref": "#/backend/entities/WeeklyStockGainer"
+          },
+          "description": "Publicly accessible collection of weekly stock gainers. Each document represents a stock that met the gain criteria. Data is populated by a secure backend process. This collection is universally readable by all application users. It includes no denormalized authorization fields as all data is public.",
+          "params": [
+            {
+              "name": "stockGainerId",
+              "description": "The unique identifier for a specific WeeklyStockGainer document."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The recommended Firestore structure for the 'NSE Weekly Gainers' application is a single, top-level collection: `/weekly_stock_gainers`. Each document within this collection will represent a `WeeklyStockGainer` entity. This approach adheres strictly to the core design principles and mandates.\n\n**Authorization Independence:** This structure inherently achieves authorization independence because there are no hierarchical dependencies for authorization. All documents in the `/weekly_stock_gainers` collection are intended to be publicly readable by all users. There are no subcollections whose access rights depend on attributes of a parent document, thus eliminating the need for complex `get()` calls in security rules. Data is managed and populated by a backend process, not by end-users, simplifying write rules to `false` for client-side operations.\n\n**Clarity of Intent & Structural Segregation:** The intent is clear: all documents in this collection represent public, read-only weekly stock gainer data. This collection has a homogeneous security posture (public read-only for all clients). There's no mixing of public and private data within this collection, removing complexity and making security rules straightforward.\n\n**QAPs (Rules are not Filters):** This structure fully supports Queryable and Accessible Pages (QAPs). Since all `WeeklyStockGainer` documents are publicly accessible and share the same security requirements, client-side queries can list and filter documents from the `/weekly_stock_gainers` collection without any security rule constraints beyond basic read access. The application's filtering, sorting, and pagination logic are applied client-side to this universally available dataset, rather than relying on security rules to filter data.\n\n**Access Modeling:** The application's requirements indicate a purely display-oriented interface without user-specific data or collaborative features. Therefore, private data, hierarchical user-owned data, or collaborative data models are not applicable. The public nature of the data aligns with the simplest access model: universal read.\n\n**Data Clarity and Predictability:** The schema for `WeeklyStockGainer` is well-defined, and the collection name `weekly_stock_gainers` is semantically clear, ensuring predictable data access and a clean database structure."
+  }
+}
