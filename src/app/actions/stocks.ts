@@ -10,10 +10,11 @@ import { StockGainer } from '@/types/stock';
  */
 export async function getStocksFromDb(): Promise<StockGainer[]> {
   try {
+    // Fetching from the requested table: daily_7day_2pct_up_stocks
     const [rows] = await pool.query('SELECT * FROM daily_7day_2pct_up_stocks');
     
     // Map database rows to our application's StockGainer interface.
-    // We handle potential variations in column naming.
+    // We handle potential variations in column naming to be resilient.
     return (rows as any[]).map(row => ({
       symbol: row.symbol || row.ticker || '',
       name: row.company_name || row.name || row.companyName || 'Unknown',
@@ -25,7 +26,6 @@ export async function getStocksFromDb(): Promise<StockGainer[]> {
     }));
   } catch (error) {
     console.error('Failed to fetch from MySQL:', error);
-    // In a real production app, you might want to log this to a service
     throw new Error('Database connection failed. Please check your network and credentials.');
   }
 }
