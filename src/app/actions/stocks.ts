@@ -43,6 +43,12 @@ export async function getStocksFromDb(): Promise<StockGainer[]> {
       // Use security as the symbol
       const symbol = getVal(['security', 'symbol', 'ticker', 'trading_symbol']) || 'N/A';
       
+      // Handle Date objects correctly to avoid React rendering errors
+      const rawDate = getVal(['current_date', 'date', 'timestamp']);
+      const comparisonDate = (rawDate instanceof Date) 
+        ? rawDate.toLocaleDateString('en-GB') 
+        : String(rawDate || new Date().toLocaleDateString('en-GB'));
+
       return {
         symbol: String(symbol),
         // Since company name isn't explicitly in the provided list, we'll use the symbol or a placeholder
@@ -52,7 +58,7 @@ export async function getStocksFromDb(): Promise<StockGainer[]> {
         percentageChange,
         // Volume wasn't in the list, so we default to 0 or try to find it
         volume: parseInt(getVal(['volume', 'tottrdqty', 'totalTradedQty']) || '0'),
-        comparisonDate: getVal(['current_date', 'date', 'timestamp']) || new Date().toLocaleDateString('en-GB')
+        comparisonDate
       };
     });
   } catch (error: any) {

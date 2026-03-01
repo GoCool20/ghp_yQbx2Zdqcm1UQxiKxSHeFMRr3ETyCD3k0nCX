@@ -72,7 +72,10 @@ export function StockTable({ stocks, page, setPage, pageSize }: StockTableProps)
                     +{stock.percentageChange.toFixed(2)}%
                   </TableCell>
                   <TableCell className="text-right font-mono text-xs">{formatVolume(stock.volume)}</TableCell>
-                  <TableCell className="text-center text-sm text-muted-foreground whitespace-nowrap">{stock.comparisonDate}</TableCell>
+                  <TableCell className="text-center text-sm text-muted-foreground whitespace-nowrap">
+                    {/* Ensure we only render strings to avoid [object Date] errors */}
+                    {typeof stock.comparisonDate === 'string' ? stock.comparisonDate : String(stock.comparisonDate)}
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
