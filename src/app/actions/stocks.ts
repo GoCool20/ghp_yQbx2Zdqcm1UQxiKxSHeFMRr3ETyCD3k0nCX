@@ -15,7 +15,6 @@ export async function getStocksFromDb(): Promise<StockGainer[]> {
     const data = rows as any[];
     
     if (data.length > 0) {
-      // Log column names to server console for easier debugging of mappings
       console.log('Successfully fetched rows. Columns detected:', Object.keys(data[0]));
     }
 
@@ -42,8 +41,9 @@ export async function getStocksFromDb(): Promise<StockGainer[]> {
         comparisonDate: getVal(['comparison_date', 'date', 'DATE', 'timestamp', 'TIMESTAMP']) || new Date().toLocaleDateString('en-GB')
       };
     });
-  } catch (error) {
-    console.error('Database connection or query error:', error);
-    throw new Error('Could not connect to the database. Please verify your RDS credentials and security group settings.');
+  } catch (error: any) {
+    console.error('Critical Database Error:', error);
+    // Return the specific error message to help identify the issue (e.g. timeout, auth, or ssl)
+    throw new Error(`${error.message || 'Connection failed'} (Code: ${error.code || 'UNKNOWN'})`);
   }
 }
