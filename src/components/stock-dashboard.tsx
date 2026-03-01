@@ -1,17 +1,43 @@
+
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { MOCK_STOCKS } from "@/lib/mock-data";
 import { StockFilters } from "./stock-filters";
 import { StockTable } from "./stock-table";
 import { StockSummary } from "./stock-summary";
+import { getStocksFromDb } from "@/app/actions/stocks";
+import { StockGainer } from "@/types/stock";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 export default function StockDashboard() {
+  const [stocks, setStocks] = useState<StockGainer[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
   const [minGain, setMinGain] = useState(2);
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState("gain_desc");
   const [page, setPage] = useState(0);
   const pageSize = 10;
+
+  // Fetch real data from MySQL on mount
+  useEffect(() => {
+    async function fetchData() {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const data = await getStocksFromDb();
+        setStocks(data);
+      } catch (err: any) {
+        setError(err.message || "Failed to connect to the stock database.");
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetchData();
+  }, []);
 
   // Reset page when filters change
   useEffect(() => {
@@ -19,7 +45,7 @@ export default function StockDashboard() {
   }, [minGain, search, sortBy]);
 
   const filteredAndSortedStocks = useMemo(() => {
-    let result = MOCK_STOCKS.filter(stock => 
+    let result = stocks.filter(stock => 
       stock.percentageChange >= minGain && 
       (stock.symbol.toLowerCase().includes(search.toLowerCase()) || 
        stock.name.toLowerCase().includes(search.toLowerCase()))
@@ -33,7 +59,7 @@ export default function StockDashboard() {
     });
 
     return result;
-  }, [minGain, search, sortBy]);
+  }, [stocks, minGain, search, sortBy]);
 
   const summaryData = useMemo(() => {
     if (filteredAndSortedStocks.length === 0) return { total: 0, highest: 0 };
@@ -44,28 +70,55 @@ export default function StockDashboard() {
     };
   }, [filteredAndSortedStocks]);
 
+  if (error) {
+    return (
+      <div className="container px-4 md:px-8 py-10 mx-auto max-w-7xl">
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Database Error</AlertTitle>
+          <AlertDescription>
+            {error}. Ensure your RDS instance is accessible and credentials in .env.local are correct.
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
   return (
     <div className="container px-4 md:px-8 py-10 mx-auto max-w-7xl animate-in fade-in duration-700">
-      <StockSummary 
-        totalStocks={summaryData.total} 
-        highestGain={summaryData.highest} 
-      />
-      
-      <StockFilters 
-        minGain={minGain} 
-        setMinGain={setMinGain}
-        search={search}
-        setSearch={setSearch}
-        sortBy={sortBy}
-        setSortBy={setSortBy}
-      />
-      
-      <StockTable 
-        stocks={filteredAndSortedStocks} 
-        page={page} 
-        setPage={setPage} 
-        pageSize={pageSize}
-      />
+      {isLoading ? (
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Skeleton className="h-32 w-full" />
+            <Skeleton className="h-32 w-full" />
+          </div>
+          <Skeleton className="h-24 w-full" />
+          <Skeleton className="h-[400px] w-full" />
+        </div>
+      ) : (
+        <>
+          <StockSummary 
+            totalStocks={summaryData.total} 
+            highestGain={summaryData.highest} 
+          />
+          
+          <StockFilters 
+            minGain={minGain} 
+            setMinGain={setMinGain}
+            search={search}
+            setSearch={setSearch}
+            sortBy={sortBy}
+            setSortBy={setSortBy}
+          />
+          
+          <StockTable 
+            stocks={filteredAndSortedStocks} 
+            page={page} 
+            setPage={setPage} 
+            pageSize={pageSize}
+          />
+        </>
+      )}
     </div>
   );
 }
