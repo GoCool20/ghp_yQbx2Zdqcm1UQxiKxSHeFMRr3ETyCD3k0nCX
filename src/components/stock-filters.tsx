@@ -50,7 +50,6 @@ export function StockFilters({ minGain, setMinGain, search, setSearch, sortBy, s
           <SelectContent>
             <SelectItem value="gain_desc">Highest Gain</SelectItem>
             <SelectItem value="gain_asc">Lowest Gain</SelectItem>
-            <SelectItem value="volume_desc">Highest Volume</SelectItem>
           </SelectContent>
         </Select>
       </div>

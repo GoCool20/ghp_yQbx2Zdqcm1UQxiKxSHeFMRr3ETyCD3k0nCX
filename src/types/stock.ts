@@ -4,8 +4,7 @@ export interface StockGainer {
   currentClose: number;
   prevWeekClose: number;
   percentageChange: number;
-  volume: number;
   comparisonDate: string;
 }
 
-export type SortField = 'gain' | 'loss' | 'volume';
+export type SortField = 'gain_desc' | 'gain_asc';

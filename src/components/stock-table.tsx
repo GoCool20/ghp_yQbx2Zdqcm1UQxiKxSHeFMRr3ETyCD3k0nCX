@@ -39,12 +39,6 @@ export function StockTable({ stocks, page, setPage, pageSize }: StockTableProps)
     }).format(val);
   };
 
-  const formatVolume = (val: number) => {
-    if (val >= 10000000) return `${(val / 10000000).toFixed(2)} Cr`;
-    if (val >= 100000) return `${(val / 100000).toFixed(2)} L`;
-    return val.toLocaleString();
-  };
-
   return (
     <div className="space-y-4">
       <div className="bg-card rounded-lg border shadow-sm overflow-hidden">
@@ -53,11 +47,9 @@ export function StockTable({ stocks, page, setPage, pageSize }: StockTableProps)
             <TableHeader className="bg-muted/50">
               <TableRow>
                 <TableHead className="font-semibold text-primary">Symbol</TableHead>
-                <TableHead className="font-semibold text-primary">Company Name</TableHead>
                 <TableHead className="font-semibold text-primary text-right">Current Close</TableHead>
                 <TableHead className="font-semibold text-primary text-right">Prev Week Close</TableHead>
                 <TableHead className="font-semibold text-primary text-right">Change (%)</TableHead>
-                <TableHead className="font-semibold text-primary text-right">Volume</TableHead>
                 <TableHead className="font-semibold text-primary text-center">Comparison Date</TableHead>
               </TableRow>
             </TableHeader>
@@ -65,16 +57,13 @@ export function StockTable({ stocks, page, setPage, pageSize }: StockTableProps)
               {currentStocks.map((stock, index) => (
                 <TableRow key={`${stock.symbol}-${index}`} className="hover:bg-muted/30 transition-colors">
                   <TableCell className="font-bold text-primary">{stock.symbol}</TableCell>
-                  <TableCell className="max-w-[200px] truncate">{stock.name}</TableCell>
                   <TableCell className="text-right font-medium">{formatCurrency(stock.currentClose)}</TableCell>
                   <TableCell className="text-right text-muted-foreground">{formatCurrency(stock.prevWeekClose)}</TableCell>
                   <TableCell className="text-right font-bold text-success">
                     +{stock.percentageChange.toFixed(2)}%
                   </TableCell>
-                  <TableCell className="text-right font-mono text-xs">{formatVolume(stock.volume)}</TableCell>
                   <TableCell className="text-center text-sm text-muted-foreground whitespace-nowrap">
-                    {/* Ensure we only render strings to avoid [object Date] errors */}
-                    {typeof stock.comparisonDate === 'string' ? stock.comparisonDate : String(stock.comparisonDate)}
+                    {stock.comparisonDate}
                   </TableCell>
                 </TableRow>
               ))}

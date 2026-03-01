@@ -16,12 +16,11 @@ export default function StockDashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
-  // Set default minGain to 0 so we can see all data initially
   const [minGain, setMinGain] = useState(0);
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState("gain_desc");
   const [page, setPage] = useState(0);
-  const pageSize = 10;
+  const pageSize = 15;
 
   async function fetchData() {
     setIsLoading(true);
@@ -36,12 +35,10 @@ export default function StockDashboard() {
     }
   }
 
-  // Fetch real data from MySQL on mount
   useEffect(() => {
     fetchData();
   }, []);
 
-  // Reset page when filters change
   useEffect(() => {
     setPage(0);
   }, [minGain, search, sortBy]);
@@ -49,14 +46,12 @@ export default function StockDashboard() {
   const filteredAndSortedStocks = useMemo(() => {
     let result = stocks.filter(stock => 
       stock.percentageChange >= minGain && 
-      (stock.symbol.toLowerCase().includes(search.toLowerCase()) || 
-       stock.name.toLowerCase().includes(search.toLowerCase()))
+      (stock.symbol.toLowerCase().includes(search.toLowerCase()))
     );
 
     result.sort((a, b) => {
       if (sortBy === "gain_desc") return b.percentageChange - a.percentageChange;
       if (sortBy === "gain_asc") return a.percentageChange - b.percentageChange;
-      if (sortBy === "volume_desc") return b.volume - a.volume;
       return 0;
     });
 
@@ -81,7 +76,7 @@ export default function StockDashboard() {
           <AlertDescription className="mt-2">
             <p className="font-mono text-xs mb-4">{error}</p>
             <p className="text-sm">
-              Please ensure your AWS RDS Security Group allows inbound traffic from this application's server on port 3306.
+              Please ensure your database credentials are correct and the RDS Security Group allows inbound traffic.
             </p>
           </AlertDescription>
         </Alert>
