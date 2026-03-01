@@ -62,8 +62,8 @@ export function StockTable({ stocks, page, setPage, pageSize }: StockTableProps)
               </TableRow>
             </TableHeader>
             <TableBody>
-              {currentStocks.map((stock) => (
-                <TableRow key={stock.symbol} className="hover:bg-muted/30 transition-colors">
+              {currentStocks.map((stock, index) => (
+                <TableRow key={`${stock.symbol}-${index}`} className="hover:bg-muted/30 transition-colors">
                   <TableCell className="font-bold text-primary">{stock.symbol}</TableCell>
                   <TableCell className="max-w-[200px] truncate">{stock.name}</TableCell>
                   <TableCell className="text-right font-medium">{formatCurrency(stock.currentClose)}</TableCell>
