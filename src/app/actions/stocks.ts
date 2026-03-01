@@ -4,24 +4,30 @@ import { pool } from '@/lib/db';
 import { StockGainer } from '@/types/stock';
 
 /**
- * Server Action to fetch stock data from the RDS MySQL table.
- * This mapping is resilient to various column naming conventions.
+ * Fetches stock data from the RDS MySQL table 'daily_7day_2pct_up_stocks'.
+ * Implements a resilient mapping system that handles various column naming styles
+ * (e.g., SYMBOL vs symbol vs trading_symbol).
  */
 export async function getStocksFromDb(): Promise<StockGainer[]> {
   try {
-    // Fetching from your specific table
+    // Perform the query on your specific table
     const [rows] = await pool.query('SELECT * FROM daily_7day_2pct_up_stocks');
-    
     const data = rows as any[];
     
-    if (data.length > 0) {
-      console.log('Successfully fetched rows. Columns detected:', Object.keys(data[0]));
+    if (data.length === 0) {
+      console.log('Database query successful but no rows were returned.');
+      return [];
     }
 
+    // Map the database rows to our application's StockGainer interface
     return data.map(row => {
-      // Helper to find a value from multiple possible column name variations
+      /**
+       * Searches for a value in a row using multiple possible key names.
+       * This makes the code resilient to database schema variations.
+       */
       const getVal = (candidates: string[]) => {
         for (const key of candidates) {
+          // Check original, lowercase, and uppercase variations
           if (row[key] !== undefined && row[key] !== null) return row[key];
           if (row[key.toLowerCase()] !== undefined && row[key.toLowerCase()] !== null) return row[key.toLowerCase()];
           if (row[key.toUpperCase()] !== undefined && row[key.toUpperCase()] !== null) return row[key.toUpperCase()];
@@ -30,20 +36,21 @@ export async function getStocksFromDb(): Promise<StockGainer[]> {
       };
 
       return {
-        symbol: getVal(['symbol', 'ticker', 'SYMBOL', 'TICKER', 'trading_symbol']) || '',
-        name: getVal(['company_name', 'name', 'companyName', 'COMPANY', 'issuer_name']) || 'Unknown',
-        currentClose: parseFloat(getVal(['current_close', 'close', 'CLOSE', 'last_price', 'LAST']) || '0'),
-        prevWeekClose: getVal(['prev_week_close', 'prev_close', 'PREVCLOSE', 'PREV_CLOSE', 'reference_price']) 
-          ? parseFloat(getVal(['prev_week_close', 'prev_close', 'PREVCLOSE', 'PREV_CLOSE', 'reference_price'])) 
-          : 0,
-        percentageChange: parseFloat(getVal(['percentage_change', 'pct_change', 'CHANGE_PCT', 'PERCENT_UP', 'percentageChange']) || '0'),
-        volume: parseInt(getVal(['volume', 'VOLUME', 'tottrdqty', 'TOTTRDQTY', 'qty']) || '0'),
-        comparisonDate: getVal(['comparison_date', 'date', 'DATE', 'timestamp', 'TIMESTAMP']) || new Date().toLocaleDateString('en-GB')
+        symbol: getVal(['symbol', 'ticker', 'trading_symbol', 'SYMBOL', 'TICKER']) || 'N/A',
+        name: getVal(['company_name', 'name', 'companyName', 'issuer_name', 'COMPANY']) || 'Unknown Company',
+        currentClose: parseFloat(getVal(['current_close', 'close', 'last_price', 'CLOSE', 'LAST']) || '0'),
+        prevWeekClose: parseFloat(getVal(['prev_week_close', 'prev_close', 'reference_price', 'PREVCLOSE']) || '0'),
+        percentageChange: parseFloat(getVal(['percentage_change', 'pct_change', 'change_pct', 'PERCENT_UP']) || '0'),
+        volume: parseInt(getVal(['volume', 'volume_total', 'tottrdqty', 'VOLUME']) || '0'),
+        comparisonDate: getVal(['comparison_date', 'date', 'timestamp', 'DATE']) || new Date().toLocaleDateString('en-GB')
       };
     });
   } catch (error: any) {
-    console.error('Critical Database Error:', error);
-    // Return the specific error message to help identify the issue (e.g. timeout, auth, or ssl)
-    throw new Error(`${error.message || 'Connection failed'} (Code: ${error.code || 'UNKNOWN'})`);
+    console.error('Database connection or query error:', error);
+    // Return a descriptive error to the UI for debugging
+    throw new Error(
+      `Database Error: ${error.message || 'Connection failed'}. ` +
+      `Check your RDS Security Groups and credentials.`
+    );
   }
 }

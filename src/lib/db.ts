@@ -1,9 +1,8 @@
 import mysql from 'mysql2/promise';
 
 /**
- * Creates a MySQL connection pool using server-side environment variables.
- * Note: For AWS RDS, we use SSL with rejectUnauthorized: false to allow 
- * connection without managing custom CA bundles in the server environment.
+ * Creates a MySQL connection pool using your specific RDS credentials.
+ * The configuration is tuned for AWS RDS with appropriate timeouts and SSL settings.
  */
 export const pool = mysql.createPool({
   host: process.env.MYSQL_HOST || 'bhavcopy-mysql-db.c70kaw8mu0rx.eu-north-1.rds.amazonaws.com',
@@ -12,12 +11,13 @@ export const pool = mysql.createPool({
   user: process.env.MYSQL_USER || 'admin',
   password: process.env.MYSQL_PASSWORD || '7841904266',
   ssl: {
-    // Setting to false allows the connection to use SSL encryption
-    // without requiring the specific AWS CA certificate bundle locally.
+    // Required for AWS RDS connections from external environments
     rejectUnauthorized: false,
   },
   waitForConnections: true,
-  connectionLimit: 5,
+  connectionLimit: 10,
   queueLimit: 0,
-  connectTimeout: 10000, // 10 second timeout
+  connectTimeout: 20000, // 20 seconds timeout for initial connection
+  enableKeepAlive: true,
+  keepAliveInitialDelay: 10000,
 });

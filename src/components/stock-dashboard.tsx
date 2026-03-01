@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
@@ -9,7 +8,8 @@ import { getStocksFromDb } from "@/app/actions/stocks";
 import { StockGainer } from "@/types/stock";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export default function StockDashboard() {
   const [stocks, setStocks] = useState<StockGainer[]>([]);
@@ -22,20 +22,21 @@ export default function StockDashboard() {
   const [page, setPage] = useState(0);
   const pageSize = 10;
 
+  async function fetchData() {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const data = await getStocksFromDb();
+      setStocks(data);
+    } catch (err: any) {
+      setError(err.message || "Failed to connect to the stock database.");
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
   // Fetch real data from MySQL on mount
   useEffect(() => {
-    async function fetchData() {
-      setIsLoading(true);
-      setError(null);
-      try {
-        const data = await getStocksFromDb();
-        setStocks(data);
-      } catch (err: any) {
-        setError(err.message || "Failed to connect to the stock database.");
-      } finally {
-        setIsLoading(false);
-      }
-    }
     fetchData();
   }, []);
 
@@ -72,14 +73,21 @@ export default function StockDashboard() {
 
   if (error) {
     return (
-      <div className="container px-4 md:px-8 py-10 mx-auto max-w-7xl">
+      <div className="container px-4 md:px-8 py-10 mx-auto max-w-7xl space-y-4">
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Database Error</AlertTitle>
-          <AlertDescription>
-            {error}. Ensure your RDS instance is accessible and credentials in .env.local are correct.
+          <AlertTitle>Connection Error</AlertTitle>
+          <AlertDescription className="mt-2">
+            <p className="font-mono text-xs mb-4">{error}</p>
+            <p className="text-sm">
+              Please ensure your AWS RDS Security Group allows inbound traffic from this application's server.
+            </p>
           </AlertDescription>
         </Alert>
+        <Button onClick={fetchData} variant="outline" className="flex items-center gap-2">
+          <RefreshCw className="h-4 w-4" />
+          Retry Connection
+        </Button>
       </div>
     );
   }
