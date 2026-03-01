@@ -1,4 +1,3 @@
-
 import mysql from 'mysql2/promise';
 
 /**
@@ -12,7 +11,8 @@ export const pool = mysql.createPool({
   user: process.env.MYSQL_USER,
   password: process.env.MYSQL_PASSWORD,
   ssl: {
-    // Required SSL certificate validation for RDS
+    // Required SSL certificate validation for RDS. 
+    // rejectUnauthorized: true uses the system CA bundle by default.
     rejectUnauthorized: true,
   },
   waitForConnections: true,

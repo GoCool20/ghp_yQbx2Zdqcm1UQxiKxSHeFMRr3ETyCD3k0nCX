@@ -1,4 +1,3 @@
-
 'use server';
 
 import { pool } from '@/lib/db';
@@ -6,26 +5,45 @@ import { StockGainer } from '@/types/stock';
 
 /**
  * Server Action to fetch stock data from the RDS MySQL table.
- * This runs entirely on the server.
+ * This mapping is resilient to various column naming conventions.
  */
 export async function getStocksFromDb(): Promise<StockGainer[]> {
   try {
-    // Fetching from the requested table: daily_7day_2pct_up_stocks
+    // Fetching from your specific table
     const [rows] = await pool.query('SELECT * FROM daily_7day_2pct_up_stocks');
     
-    // Map database rows to our application's StockGainer interface.
-    // We handle potential variations in column naming to be resilient.
-    return (rows as any[]).map(row => ({
-      symbol: row.symbol || row.ticker || '',
-      name: row.company_name || row.name || row.companyName || 'Unknown',
-      currentClose: parseFloat(row.current_close || row.currentClose || row.close_price || '0'),
-      prevWeekClose: parseFloat(row.prev_week_close || row.prevWeekClose || '0'),
-      percentageChange: parseFloat(row.percentage_change || row.percentageChange || '0'),
-      volume: parseInt(row.volume || '0'),
-      comparisonDate: row.comparison_date || row.comparisonDate || new Date().toLocaleDateString('en-GB')
-    }));
+    const data = rows as any[];
+    
+    if (data.length > 0) {
+      // Log column names to server console for easier debugging of mappings
+      console.log('Successfully fetched rows. Columns detected:', Object.keys(data[0]));
+    }
+
+    return data.map(row => {
+      // Helper to find a value from multiple possible column name variations
+      const getVal = (candidates: string[]) => {
+        for (const key of candidates) {
+          if (row[key] !== undefined && row[key] !== null) return row[key];
+          if (row[key.toLowerCase()] !== undefined && row[key.toLowerCase()] !== null) return row[key.toLowerCase()];
+          if (row[key.toUpperCase()] !== undefined && row[key.toUpperCase()] !== null) return row[key.toUpperCase()];
+        }
+        return null;
+      };
+
+      return {
+        symbol: getVal(['symbol', 'ticker', 'SYMBOL', 'TICKER', 'trading_symbol']) || '',
+        name: getVal(['company_name', 'name', 'companyName', 'COMPANY', 'issuer_name']) || 'Unknown',
+        currentClose: parseFloat(getVal(['current_close', 'close', 'CLOSE', 'last_price', 'LAST']) || '0'),
+        prevWeekClose: getVal(['prev_week_close', 'prev_close', 'PREVCLOSE', 'PREV_CLOSE', 'reference_price']) 
+          ? parseFloat(getVal(['prev_week_close', 'prev_close', 'PREVCLOSE', 'PREV_CLOSE', 'reference_price'])) 
+          : 0,
+        percentageChange: parseFloat(getVal(['percentage_change', 'pct_change', 'CHANGE_PCT', 'PERCENT_UP', 'percentageChange']) || '0'),
+        volume: parseInt(getVal(['volume', 'VOLUME', 'tottrdqty', 'TOTTRDQTY', 'qty']) || '0'),
+        comparisonDate: getVal(['comparison_date', 'date', 'DATE', 'timestamp', 'TIMESTAMP']) || new Date().toLocaleDateString('en-GB')
+      };
+    });
   } catch (error) {
-    console.error('Failed to fetch from MySQL:', error);
-    throw new Error('Database connection failed. Please check your network and credentials.');
+    console.error('Database connection or query error:', error);
+    throw new Error('Could not connect to the database. Please verify your RDS credentials and security group settings.');
   }
 }
