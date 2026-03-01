@@ -16,7 +16,8 @@ export default function StockDashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
-  const [minGain, setMinGain] = useState(2);
+  // Set default minGain to 0 so we can see all data initially
+  const [minGain, setMinGain] = useState(0);
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState("gain_desc");
   const [page, setPage] = useState(0);
@@ -80,7 +81,7 @@ export default function StockDashboard() {
           <AlertDescription className="mt-2">
             <p className="font-mono text-xs mb-4">{error}</p>
             <p className="text-sm">
-              Please ensure your AWS RDS Security Group allows inbound traffic from this application's server.
+              Please ensure your AWS RDS Security Group allows inbound traffic from this application's server on port 3306.
             </p>
           </AlertDescription>
         </Alert>
@@ -125,6 +126,13 @@ export default function StockDashboard() {
             setPage={setPage} 
             pageSize={pageSize}
           />
+          
+          {stocks.length > 0 && filteredAndSortedStocks.length === 0 && (
+            <div className="mt-4 p-4 bg-muted rounded-md text-center text-sm">
+              <p>Database returned {stocks.length} records, but they were filtered out.</p>
+              <Button variant="link" onClick={() => setMinGain(0)}>Show all records</Button>
+            </div>
+          )}
         </>
       )}
     </div>

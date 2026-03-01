@@ -18,8 +18,13 @@ export async function getStocksFromDb(): Promise<StockGainer[]> {
       return [];
     }
 
-    // Debug log to help identify column names if mapping fails
-    console.log('Database Sample Row Keys:', Object.keys(data[0]));
+    // Debug log to help identify column names in the server console
+    const columnNames = Object.keys(data[0]);
+    console.log('--- DATABASE DEBUG INFO ---');
+    console.log('Table: daily_7day_2pct_up_stocks');
+    console.log('Columns found:', columnNames.join(', '));
+    console.log('Sample Row:', JSON.stringify(data[0]));
+    console.log('---------------------------');
 
     // Map the database rows to our application's StockGainer interface
     return data.map(row => {
@@ -28,40 +33,42 @@ export async function getStocksFromDb(): Promise<StockGainer[]> {
        */
       const getVal = (candidates: string[]) => {
         for (const key of candidates) {
-          // Check original
+          // Check exact match
           if (row[key] !== undefined && row[key] !== null) return row[key];
-          // Check case-insensitive variants
+          
+          // Check case-insensitive match
           const foundKey = Object.keys(row).find(k => k.toLowerCase() === key.toLowerCase());
           if (foundKey && row[foundKey] !== undefined && row[foundKey] !== null) return row[foundKey];
         }
         return null;
       };
 
-      const currentClose = parseFloat(getVal(['current_close', 'close', 'last_price', 'CLOSE', 'LAST', 'lastPrice']) || '0');
-      const prevWeekClose = parseFloat(getVal(['prev_week_close', 'prev_close', 'reference_price', 'PREVCLOSE', 'prevClose']) || '0');
+      const currentClose = parseFloat(getVal(['current_close', 'close', 'last_price', 'CLOSE', 'LAST', 'lastPrice', 'last_price']) || '0');
+      const prevWeekClose = parseFloat(getVal(['prev_week_close', 'prev_close', 'reference_price', 'PREVCLOSE', 'prevClose', 'prev_close']) || '0');
       
       // Attempt to get pre-calculated percentage change, or calculate it manually
-      let percentageChange = parseFloat(getVal(['percentage_change', 'pct_change', 'change_pct', 'PERCENT_UP', 'pChange', 'percentageChange']) || '0');
+      let percentageChange = parseFloat(getVal(['percentage_change', 'pct_change', 'change_pct', 'PERCENT_UP', 'pChange', 'percentageChange', 'percentage_up']) || '0');
       
+      // Fallback calculation if percentage isn't provided or is zero
       if (percentageChange === 0 && prevWeekClose > 0) {
         percentageChange = ((currentClose - prevWeekClose) / prevWeekClose) * 100;
       }
 
       return {
-        symbol: getVal(['symbol', 'ticker', 'trading_symbol', 'SYMBOL', 'TICKER', 'tradingSymbol']) || 'N/A',
-        name: getVal(['company_name', 'name', 'companyName', 'issuer_name', 'COMPANY', 'issuerName']) || 'Unknown Company',
+        symbol: getVal(['symbol', 'ticker', 'trading_symbol', 'SYMBOL', 'TICKER', 'tradingSymbol', 'tradingsymbol']) || 'N/A',
+        name: getVal(['company_name', 'name', 'companyName', 'issuer_name', 'COMPANY', 'issuerName', 'issuername']) || 'Unknown Company',
         currentClose,
         prevWeekClose,
         percentageChange,
-        volume: parseInt(getVal(['volume', 'volume_total', 'tottrdqty', 'VOLUME', 'totalTradedQty']) || '0'),
-        comparisonDate: getVal(['comparison_date', 'date', 'timestamp', 'DATE', 'TIMESTAMP']) || new Date().toLocaleDateString('en-GB')
+        volume: parseInt(getVal(['volume', 'volume_total', 'tottrdqty', 'VOLUME', 'totalTradedQty', 'tottrdqty']) || '0'),
+        comparisonDate: getVal(['comparison_date', 'date', 'timestamp', 'DATE', 'TIMESTAMP', 'timestamp']) || new Date().toLocaleDateString('en-GB')
       };
     });
   } catch (error: any) {
     console.error('Database connection or query error:', error);
     throw new Error(
       `Database Error: ${error.message || 'Connection failed'}. ` +
-      `Check your RDS Security Groups and credentials.`
+      `Host: ${process.env.MYSQL_HOST || 'bhavcopy-mysql-db.c70kaw8mu0rx.eu-north-1.rds.amazonaws.com'}`
     );
   }
 }
