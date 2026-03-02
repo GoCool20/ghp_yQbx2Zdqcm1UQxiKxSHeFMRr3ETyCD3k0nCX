@@ -3,7 +3,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 
 export const metadata: Metadata = {
-  title: 'NSE Weekly Gainers | Stock Performance Tracker',
+  title: 'NSE Analysis | Stock Performance Tracker',
   description: 'Simple dashboard tracking stocks with over 2% weekly gains.',
 };
 
@@ -24,7 +24,7 @@ export default function RootLayout({
           <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-sm">
             <div className="container flex h-16 items-center justify-between px-4 md:px-8 mx-auto max-w-7xl">
               <div className="flex flex-col">
-                <h1 className="text-xl font-bold tracking-tight text-primary font-headline">NSE Weekly Gainers</h1>
+                <h1 className="text-xl font-bold tracking-tight text-primary font-headline">NSE Analysis</h1>
               </div>
               <nav className="flex items-center gap-6">
                 <a href="/" className="text-sm font-medium hover:text-primary transition-colors">Dashboard</a>
@@ -38,7 +38,7 @@ export default function RootLayout({
           <footer className="border-t py-6 md:py-0">
             <div className="container flex flex-col items-center justify-between gap-4 md:h-24 md:flex-row px-4 md:px-8 mx-auto max-w-7xl">
               <p className="text-balance text-center text-sm leading-loose text-muted-foreground md:text-left">
-                &copy; {new Date().getFullYear()} NSE Weekly Gainers. All rights reserved.
+                &copy; {new Date().getFullYear()} NSE Analysis. All rights reserved.
               </p>
               <p className="text-xs text-muted-foreground italic">
                 Data is for informational purposes only.
