@@ -1,3 +1,4 @@
+
 "use client";
 
 import {
@@ -10,7 +11,7 @@ import {
 } from "@/components/ui/table"
 import { StockGainer } from "@/types/stock"
 import { Button } from "@/components/ui/button"
-import { ChevronLeft, ChevronRight } from "lucide-react"
+import { ChevronLeft, ChevronRight, ArrowLeftRight } from "lucide-react"
 
 interface StockTableProps {
   stocks: StockGainer[];
@@ -43,32 +44,43 @@ export function StockTable({ stocks, page, setPage, pageSize }: StockTableProps)
 
   return (
     <div className="space-y-4">
+      <div className="md:hidden flex items-center justify-center gap-2 text-[10px] uppercase tracking-wider font-semibold text-muted-foreground/60 mb-1 animate-pulse">
+        <ArrowLeftRight className="h-3 w-3" />
+        <span>Swipe table to see more</span>
+      </div>
+
       <div className="bg-card rounded-lg border shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <Table>
+        <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-muted-foreground/20">
+          <Table className="min-w-[700px] md:min-w-full">
             <TableHeader className="bg-muted/50">
               <TableRow>
-                <TableHead className="font-semibold text-primary whitespace-nowrap">Symbol</TableHead>
-                <TableHead className="font-semibold text-primary hidden lg:table-cell">Name</TableHead>
+                <TableHead className="font-semibold text-primary sticky left-0 bg-muted/50 z-10 whitespace-nowrap">Symbol</TableHead>
+                <TableHead className="font-semibold text-primary whitespace-nowrap hidden lg:table-cell">Name</TableHead>
                 <TableHead className="font-semibold text-primary text-right whitespace-nowrap">Current Close</TableHead>
-                <TableHead className="font-semibold text-primary text-right hidden sm:table-cell whitespace-nowrap">Prev Week Close</TableHead>
+                <TableHead className="font-semibold text-primary text-right whitespace-nowrap">Prev Week Close</TableHead>
                 <TableHead className="font-semibold text-primary text-right whitespace-nowrap">Change (%)</TableHead>
-                <TableHead className="font-semibold text-primary text-center hidden md:table-cell whitespace-nowrap">Comparison Date</TableHead>
+                <TableHead className="font-semibold text-primary text-center whitespace-nowrap">Comparison Date</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {currentStocks.map((stock, index) => (
-                <TableRow key={`${stock.symbol}-${index}`} className="hover:bg-muted/30 transition-colors">
-                  <TableCell className="font-bold text-primary py-3 md:py-4">{stock.symbol}</TableCell>
-                  <TableCell className="hidden lg:table-cell max-w-[150px] truncate text-muted-foreground">{stock.name}</TableCell>
-                  <TableCell className="text-right font-medium">{formatCurrency(stock.currentClose)}</TableCell>
-                  <TableCell className="text-right text-muted-foreground hidden sm:table-cell">
+                <TableRow key={`${stock.symbol}-${index}-${page}`} className="hover:bg-muted/30 transition-colors">
+                  <TableCell className="font-bold text-primary py-3 md:py-4 sticky left-0 bg-card z-10 border-r md:border-r-0 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)] md:shadow-none whitespace-nowrap">
+                    {stock.symbol}
+                  </TableCell>
+                  <TableCell className="hidden lg:table-cell max-w-[150px] truncate text-muted-foreground">
+                    {stock.name}
+                  </TableCell>
+                  <TableCell className="text-right font-medium whitespace-nowrap">
+                    {formatCurrency(stock.currentClose)}
+                  </TableCell>
+                  <TableCell className="text-right text-muted-foreground whitespace-nowrap">
                     {formatCurrency(stock.prevWeekClose)}
                   </TableCell>
                   <TableCell className="text-right font-bold text-success whitespace-nowrap">
                     +{stock.percentageChange.toFixed(2)}%
                   </TableCell>
-                  <TableCell className="text-center text-xs text-muted-foreground hidden md:table-cell whitespace-nowrap">
+                  <TableCell className="text-center text-xs text-muted-foreground whitespace-nowrap">
                     {stock.comparisonDate}
                   </TableCell>
                 </TableRow>
@@ -87,7 +99,10 @@ export function StockTable({ stocks, page, setPage, pageSize }: StockTableProps)
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setPage(page - 1)}
+              onClick={() => {
+                setPage(page - 1);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
               disabled={page === 0}
               className="h-9 px-3"
             >
@@ -100,7 +115,10 @@ export function StockTable({ stocks, page, setPage, pageSize }: StockTableProps)
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setPage(page + 1)}
+              onClick={() => {
+                setPage(page + 1);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
               disabled={page >= totalPages - 1}
               className="h-9 px-3"
             >
