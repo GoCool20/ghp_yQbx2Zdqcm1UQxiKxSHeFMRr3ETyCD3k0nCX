@@ -25,7 +25,6 @@ export default function RootLayout({
             <div className="container flex h-16 items-center justify-between px-4 md:px-8 mx-auto max-w-7xl">
               <div className="flex flex-col">
                 <h1 className="text-xl font-bold tracking-tight text-primary font-headline">NSE Weekly Gainers</h1>
-                <p className="text-xs text-muted-foreground">Stocks up more than 2% compared to last week</p>
               </div>
               <nav className="flex items-center gap-6">
                 <a href="/" className="text-sm font-medium hover:text-primary transition-colors">Dashboard</a>
